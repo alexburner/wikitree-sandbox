@@ -34,6 +34,7 @@
 	*/
 
 	function ajax(settings, success, error) {
+		// generate unique id
 		var id = Date.now();
 		if (settings && settings.data && settings.data.action) {
 			id += ' "' + settings.data.action + '"';
@@ -77,7 +78,30 @@
 		$.ajax(settings);
 	};
 
-	// array -> list el
+	// patch up "implicit protocol" attributes
+	// NOTE for local dev (file:// won't work)
+	function addHttp(el) {
+		nodeList = el.querySelectorAll('*');
+		for (var i = 0, l = nodeList.length; i < l; i++) {
+			var node = nodeList[i];
+			// patch src="//...
+			if (node.hasAttribute('src')) {
+				var src = node.getAttribute('src');
+				if (src.indexOf('//') === 0) {
+					node.setAttribute('src', 'http:' + src);
+				}
+			}
+			// patch href="//...
+			if (node.hasAttribute('href')) {
+				var href = node.getAttribute('href');
+				if (href.indexOf('//') === 0) {
+					node.setAttribute('href', 'http:' + href);
+				}
+			}
+		}
+	}
+
+	// array -> list element
 	function makeList(arr) {
 		var list = document.createElement('ul');
 		arr.forEach(function (value) {
@@ -86,30 +110,6 @@
 			list.appendChild(item);
 		});
 		return list;
-	}
-
-	// patch up "implicit protocol" src/href attributes
-	function addHttp(el) {
-		nodeList = el.querySelectorAll('*');
-		for (var i = 0, l = nodeList.length; i < l; i++) {
-			var node = nodeList[i];
-			// patch src
-			if (node.hasAttribute('src')) {
-				var src = node.getAttribute('src');
-				if (src.indexOf('//') === 0) {
-					src = 'http:' + src;
-					node.setAttribute('src', src);
-				}
-			}
-			// patch href
-			if (node.hasAttribute('href')) {
-				var href = node.getAttribute('href');
-				if (href.indexOf('//') === 0) {
-					href = 'http:' + href;
-					node.setAttribute('href', href);
-				}
-			}
-		}
 	}
 
 
@@ -130,10 +130,10 @@
 				type: 'GET',
 				dataType: 'jsonp',
 				data: {
-					format: 'json',
 					action: 'parse',
-					redirects: 'true',
+					format: 'json',
 					prop: 'text',
+					redirects: 'true',
 					page: title
 				}
 			};
@@ -148,8 +148,8 @@
 				type: 'GET',
 				dataType: 'jsonp',
 				data: {
-					format: 'json',
 					action: 'opensearch',
+					format: 'json',
 					namespace: 0,
 					limit: 10,
 					search: title
