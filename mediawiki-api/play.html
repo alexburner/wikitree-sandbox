@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>sandbox - MW API</title>
+</head>
+<body>
+<script type="text/javascript" src="js/jquery-1.11.2.min.js"></script>
+<script type="text/javascript">
+
+
+
+	/*
+
+		MediaWiki API reference
+
+		Main Page
+		http://www.mediawiki.org/wiki/API:Main_page
+
+		Parse (grab parsed article)
+		http://www.mediawiki.org/wiki/API:Parsing_wikitext
+
+		Opensearch (find articles by title)
+		http://www.mediawiki.org/wiki/API:Opensearch
+
+
+	 */
+
+
+
+
+
+	/*
+		Utilities
+	*/
+
+	function ajax(settings, success, error) {
+		var id = Date.now();
+		if (settings && settings.data && settings.data.action) {
+			id += ' "' + settings.data.action + '"';
+		}
+		console.log('---------------------------------------');
+		console.log('>>> AJAX request ' + id);
+		console.log('-> settings:');
+		console.log(settings);
+		console.log('---------------------------------------');
+		// add success handler
+		settings.success = function (data, textStatus, jqXHR) {
+			console.log('---------------------------------------');
+			console.log('<<< AJAX success ' + id);
+			console.log('-> data:');
+			console.log(data);
+			console.log('-> textStatus:');
+			console.log(textStatus);
+			console.log('-> jqXHR:');
+			console.log(jqXHR);
+			console.log('---------------------------------------');
+			if (success) {
+				success(data);
+			}
+		};
+		// add error handler
+		settings.error = function (jqXHR, textStatus, errorThrown) {
+			console.log('---------------------------------------');
+			console.log('<<< AJAX error ' + id);
+			console.log('-> jqXHR:');
+			console.log(jqXHR);
+			console.log('-> textStatus:');
+			console.log(textStatus);
+			console.log('-> errorThrown:');
+			console.log(errorThrown);
+			console.log('---------------------------------------');
+			if (error) {
+				error(errorThrown);
+			}
+		};
+		// make ajax request
+		$.ajax(settings);
+	};
+
+	// array -> list el
+	function makeList(arr) {
+		var list = document.createElement('ul');
+		arr.forEach(function (value) {
+			var item = document.createElement('li');
+			item.innerHTML = value;
+			list.appendChild(item);
+		});
+		return list;
+	}
+
+	// patch up "implicit protocol" src/href attributes
+	function addHttp(el) {
+		nodeList = el.querySelectorAll('*');
+		for (var i = 0, l = nodeList.length; i < l; i++) {
+			var node = nodeList[i];
+			// patch src
+			if (node.hasAttribute('src')) {
+				var src = node.getAttribute('src');
+				if (src.indexOf('//') === 0) {
+					src = 'http:' + src;
+					node.setAttribute('src', src);
+				}
+			}
+			// patch href
+			if (node.hasAttribute('href')) {
+				var href = node.getAttribute('href');
+				if (href.indexOf('//') === 0) {
+					href = 'http:' + href;
+					node.setAttribute('href', href);
+				}
+			}
+		}
+	}
+
+
+
+
+
+
+	/*
+		MediaWiki API helpers
+	 */
+
+	var wikiAPI = {
+
+		parse: function (title, success, error) {
+			// configuration
+			var settings = {
+				url: 'http://en.wikipedia.org/w/api.php',
+				type: 'GET',
+				dataType: 'jsonp',
+				data: {
+					format: 'json',
+					action: 'parse',
+					redirects: 'true',
+					prop: 'text',
+					page: title
+				}
+			};
+			// make ajax request
+			ajax(settings, success, error);
+		},
+
+		opensearch: function (title, success, error) {
+			// configuration
+			var settings = {
+				url: 'http://en.wikipedia.org/w/api.php',
+				type: 'GET',
+				dataType: 'jsonp',
+				data: {
+					format: 'json',
+					action: 'opensearch',
+					namespace: 0,
+					limit: 10,
+					search: title
+				}
+			};
+			// make ajax request
+			ajax(settings, success, error);
+		}
+
+	};
+
+
+
+
+
+
+	/*
+		Playtime
+	 */
+
+	wikiAPI.parse('normal_mode', function (res) {
+		if (res && res.parse) {
+
+			if (res.parse.title) {
+				var title = document.createElement('h1');
+				title.innerHTML = res.parse.title;
+				document.body.appendChild(title);
+			}
+
+			if (res.parse.text && res.parse.text['*']) {
+				var article = document.createElement('div');
+				article.style.width = '90%';
+				article.style.height = '400px';
+				article.style.overflow = 'scroll';
+				article.style.border = '1px solid black';
+				article.innerHTML = res.parse.text['*'];
+
+				addHttp(article);
+
+				document.body.appendChild(article);
+			}
+
+		}
+	});
+
+	wikiAPI.opensearch('resonance', function (res) {
+		if (res && res[0] && res[1] && res[2] && res[3]) {
+
+			var title = document.createElement('h1');
+			title.innerHTML = res[0];
+			document.body.appendChild(title);
+
+			var lists = document.createElement('div');
+			lists.style.width = '90%';
+			lists.style.height = '400px';
+			lists.style.overflow = 'scroll';
+			lists.style.border = '1px solid black';
+			document.body.appendChild(lists);
+
+			lists.appendChild(makeList(res[1]));
+			lists.appendChild(makeList(res[2]));
+			lists.appendChild(makeList(res[3]));
+
+		}
+	});
+
+</script>
+</body>
+</html>
