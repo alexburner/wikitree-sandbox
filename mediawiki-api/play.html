@@ -79,19 +79,19 @@
 	};
 
 	// patch up "implicit protocol" attributes
-	// NOTE for local dev (file:// won't work)
+	// NOTE this is for local dev (file:// won't work)
 	function addHttp(el) {
 		nodeList = el.querySelectorAll('*');
 		for (var i = 0, l = nodeList.length; i < l; i++) {
 			var node = nodeList[i];
-			// patch src="//...
+			// src="//...
 			if (node.hasAttribute('src')) {
 				var src = node.getAttribute('src');
 				if (src.indexOf('//') === 0) {
 					node.setAttribute('src', 'http:' + src);
 				}
 			}
-			// patch href="//...
+			// href="//...
 			if (node.hasAttribute('href')) {
 				var href = node.getAttribute('href');
 				if (href.indexOf('//') === 0) {
